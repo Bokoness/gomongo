@@ -14,6 +14,14 @@ type User struct {
 	Todos    []Todo
 }
 
+func (u *User) FindByIdAndUpdate(id string) {
+	update := map[string]string{
+		"username": "bokoness is the update",
+	}
+	db.FindByIdAndUpdate(collection, id, update)
+
+}
+
 func (u *User) FindById(id int64) {
 
 }

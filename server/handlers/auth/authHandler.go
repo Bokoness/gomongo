@@ -2,16 +2,14 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"gomongo/db/models"
 	"gomongo/services"
 	"net/http"
 )
 
 func Register(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("u")
 	var u models.User
-	_ = json.NewDecoder(r.Body).Decode(&u)
+	json.NewDecoder(r.Body).Decode(&u)
 	u.Store()
 }
 

@@ -11,8 +11,9 @@ import (
 
 func LunchServer() {
 	r := mux.NewRouter()
-	routes.TodoRoutes(r)
 	routes.AuthRoutes(r)
+	routes.UserRoutes(r)
+	routes.TodoRoutes(r)
 	// r.Use(middleware.ServerHeaders)
 	port := fmt.Sprintf(":%s", os.Getenv("PORT"))
 	fmt.Printf("Server is running on port %s", port)
