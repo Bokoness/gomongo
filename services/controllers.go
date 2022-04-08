@@ -5,25 +5,17 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
 )
 
 type customClaims struct {
-	Uid int64 `json:"uid"`
+	Uid string `json:"uid"`
 	jwt.StandardClaims
 }
 
-func ParseIdFromReq(r *http.Request) int64 {
-	params := mux.Vars(r)
-	id, _ := strconv.ParseInt(params["id"], 10, 64)
-	return id
-}
-
-func CreateCookieToken(uid int64, w http.ResponseWriter) {
+func CreateCookieToken(uid string, w http.ResponseWriter) {
 	expireDays := 3
 	d, _ := time.ParseDuration(fmt.Sprintf("%dh", expireDays*24))
 	claims := customClaims{

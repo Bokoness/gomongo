@@ -1,11 +1,10 @@
 package models
 
 type Todo struct {
-	Id      int64  `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	UserID  int64  `json:"userId"`
-	User    User
+	ID      string `json:"_id" bson:"_id"`
+	Title   string `json:"title" bson:"totle"`
+	Content string `json:"content" bson:"content"`
+	User    string `json:"user" bson:"user"`
 }
 
 func (t *Todo) FindById(id int64) {

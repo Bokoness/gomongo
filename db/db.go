@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -13,20 +12,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func connect() (*mongo.Client, context.Context) {
+func connect() (*mongo.Client, *mongo.Database, context.Context) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	clientOptions := options.Client().ApplyURI(os.Getenv("MONGO"))
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err) //TODO: change to normal error
 	}
-	return client, ctx
+	var dbName = os.Getenv("DB")
+	db := client.Database(dbName)
+	return client, db, ctx
 }
 
 func InsertOne(col string, data interface{}) (*mongo.InsertOneResult, error) {
-	var dbName = os.Getenv("DB")
-	client, ctx := connect()
-	db := client.Database(dbName)
+	client, db, ctx := connect()
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
 	res, err := collection.InsertOne(context.TODO(), data)
@@ -37,52 +36,63 @@ func InsertOne(col string, data interface{}) (*mongo.InsertOneResult, error) {
 }
 
 func FindOne(col string, filter map[string]string) *mongo.SingleResult {
-	var dbName = os.Getenv("DB")
-	client, ctx := connect()
-	db := client.Database(dbName)
+	client, db, ctx := connect()
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
 	result := collection.FindOne(ctx, filter)
 	return result
 }
 
-func UpdateOne(col string, filter map[string]string, update interface{}) error {
-	m := map[string]string{
-		"username": "bokoness_updated",
-	}
-	fmt.Println(m)
-	mm := map[string]interface{}{
-		"$set": m,
-	}
-	var dbName = os.Getenv("DB")
-	client, ctx := connect()
-	db := client.Database(dbName)
+func FindMany(col string, filter interface{}) (*mongo.Cursor, error) {
+	client, db, ctx := connect()
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
-	_, err := collection.UpdateOne(context.TODO(), filter, mm)
+	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return cursor, nil
 }
 
-func FindByIdAndUpdate(col string, id string, update interface{}) error {
-	_id, _ := primitive.ObjectIDFromHex(id)
-	// filter := map[string]primitive.ObjectID{
-	// 	"_id": _id,
-	// }
-	filter := bson.D{{"_id", _id}}
-	var dbName = os.Getenv("DB")
-	client, ctx := connect()
-	db := client.Database(dbName)
+func FindOneById(col string, id string) *mongo.SingleResult {
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	client, db, ctx := connect()
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
-	tempUpdate := bson.D{
-		{"$set", bson.D{
-			{"username", "yael"},
-		}},
+	result := collection.FindOne(ctx, bson.D{{Key: "_id", Value: objectId}})
+	return result
+}
+
+func FindByIdAndUpdate(col string, id string, updates interface{}) (*mongo.UpdateResult, error) {
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	client, db, ctx := connect()
+	defer client.Disconnect(ctx)
+	collection := db.Collection(col)
+	result, err := collection.UpdateByID(ctx, objectId, bson.D{{Key: "$set", Value: updates}})
+	if err != nil {
+		return nil, err
 	}
-	_, err := collection.UpdateOne(ctx, filter, tempUpdate)
+	return result, nil
+}
+
+func UpdateOne(col string, filter map[string]string, updates interface{}) (*mongo.UpdateResult, error) {
+	client, db, ctx := connect()
+	defer client.Disconnect(ctx)
+	collection := db.Collection(col)
+	result, err := collection.UpdateOne(ctx, filter, updates)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func FindByIdAndDelete(col string, id string) error {
+	client, db, ctx := connect()
+	defer client.Disconnect(ctx)
+	collection := db.Collection(col)
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.D{{Key: "_id", Value: objectId}}
+	_, err := collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
 		return err
 	}
