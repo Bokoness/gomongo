@@ -12,7 +12,6 @@ import (
 )
 
 func connect() (*mongo.Client, *mongo.Database, context.Context, error) {
-	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	ctx := context.Background()
 	clientOptions := options.Client().ApplyURI(os.Getenv("MONGO"))
 	client, err := mongo.Connect(ctx, clientOptions)
@@ -125,5 +124,13 @@ func InsertedIdToObjectId(id interface{}) (*primitive.ObjectID, error) {
 		return &oid, nil
 	} else {
 		return nil, errors.New("cannot convert into objectId")
+	}
+}
+
+func InsertedIdToString(id interface{}) (string, error) {
+	if oid, ok := id.(string); ok {
+		return oid, nil
+	} else {
+		return "", errors.New("cannot convert into objectId")
 	}
 }
