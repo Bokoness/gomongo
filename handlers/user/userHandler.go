@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func Show(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +24,11 @@ func Show(w http.ResponseWriter, r *http.Request) {
 func Update(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var u models.User
-	u.FindByIdAndUpdate(params["id"])
+	id, err := primitive.ObjectIDFromHex(params["id"])
+	if err != nil {
+		w.WriteHeader(400)
+	}
+	u.FindByIdAndUpdate(id)
 }
 
 func Destroy(w http.ResponseWriter, r *http.Request) {

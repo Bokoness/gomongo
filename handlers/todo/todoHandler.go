@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"gomongo/db/models"
 	"gomongo/middleware"
+	"gomongo/services"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func Store(w http.ResponseWriter, r *http.Request) {
@@ -33,13 +35,9 @@ func Show(w http.ResponseWriter, r *http.Request) {
 	if e != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	var todo models.Todo
-	todo.FindById(id)
-	j, e := json.Marshal(todo)
-	if e != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	w.Write(j)
+	var t models.Todo
+	t.FindById(id)
+	services.WriteDataIntoResponse(t, w)
 }
 
 func Update(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +47,11 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	u, _ := middleware.FetchUserFromCookie(r)
-	t.ID = vars["id"]
+	id, err := primitive.ObjectIDFromHex(vars["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	t.ID = id
 	t.User = u.ID
 	t.Save()
 }

@@ -2,9 +2,8 @@ package db
 
 import (
 	"context"
-	"log"
+	"errors"
 	"os"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -12,20 +11,25 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func connect() (*mongo.Client, *mongo.Database, context.Context) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+func connect() (*mongo.Client, *mongo.Database, context.Context, error) {
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx := context.Background()
 	clientOptions := options.Client().ApplyURI(os.Getenv("MONGO"))
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Fatal(err) //TODO: change to normal error
+		err := errors.New("cannot connect to database")
+		return nil, nil, nil, err
 	}
 	var dbName = os.Getenv("DB")
 	db := client.Database(dbName)
-	return client, db, ctx
+	return client, db, ctx, nil
 }
 
 func InsertOne(col string, data interface{}) (*mongo.InsertOneResult, error) {
-	client, db, ctx := connect()
+	client, db, ctx, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
 	res, err := collection.InsertOne(context.TODO(), data)
@@ -35,16 +39,22 @@ func InsertOne(col string, data interface{}) (*mongo.InsertOneResult, error) {
 	return res, nil
 }
 
-func FindOne(col string, filter map[string]string) *mongo.SingleResult {
-	client, db, ctx := connect()
+func FindOne(col string, filter map[string]string) (*mongo.SingleResult, error) {
+	client, db, ctx, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
 	result := collection.FindOne(ctx, filter)
-	return result
+	return result, err
 }
 
 func FindMany(col string, filter interface{}) (*mongo.Cursor, error) {
-	client, db, ctx := connect()
+	client, db, ctx, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
 	cursor, err := collection.Find(ctx, filter)
@@ -54,21 +64,26 @@ func FindMany(col string, filter interface{}) (*mongo.Cursor, error) {
 	return cursor, nil
 }
 
-func FindOneById(col string, id string) *mongo.SingleResult {
+func FindOneById(col string, id string) (*mongo.SingleResult, error) {
 	objectId, _ := primitive.ObjectIDFromHex(id)
-	client, db, ctx := connect()
+	client, db, ctx, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
 	result := collection.FindOne(ctx, bson.D{{Key: "_id", Value: objectId}})
-	return result
+	return result, nil
 }
 
-func FindByIdAndUpdate(col string, id string, updates interface{}) (*mongo.UpdateResult, error) {
-	objectId, _ := primitive.ObjectIDFromHex(id)
-	client, db, ctx := connect()
+func FindByIdAndUpdate(col string, id primitive.ObjectID, updates interface{}) (*mongo.UpdateResult, error) {
+	client, db, ctx, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
-	result, err := collection.UpdateByID(ctx, objectId, bson.D{{Key: "$set", Value: updates}})
+	result, err := collection.UpdateByID(ctx, id, bson.D{{Key: "$set", Value: updates}})
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +91,10 @@ func FindByIdAndUpdate(col string, id string, updates interface{}) (*mongo.Updat
 }
 
 func UpdateOne(col string, filter map[string]string, updates interface{}) (*mongo.UpdateResult, error) {
-	client, db, ctx := connect()
+	client, db, ctx, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
 	result, err := collection.UpdateOne(ctx, filter, updates)
@@ -86,15 +104,26 @@ func UpdateOne(col string, filter map[string]string, updates interface{}) (*mong
 	return result, nil
 }
 
-func FindByIdAndDelete(col string, id string) error {
-	client, db, ctx := connect()
+func FindByIdAndDelete(col string, id primitive.ObjectID) error {
+	client, db, ctx, err := connect()
+	if err != nil {
+		return err
+	}
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
-	objectId, _ := primitive.ObjectIDFromHex(id)
-	filter := bson.D{{Key: "_id", Value: objectId}}
-	_, err := collection.DeleteOne(context.TODO(), filter)
+	filter := bson.D{{Key: "_id", Value: id}}
+	_, err = collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+// InsertedIdToObjectId convert Result.InsertedId into primitive.ObjectId
+func InsertedIdToObjectId(id interface{}) (*primitive.ObjectID, error) {
+	if oid, ok := id.(primitive.ObjectID); ok {
+		return &oid, nil
+	} else {
+		return nil, errors.New("cannot convert into objectId")
+	}
 }

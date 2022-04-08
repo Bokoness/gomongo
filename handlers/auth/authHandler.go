@@ -10,7 +10,12 @@ import (
 func Register(w http.ResponseWriter, r *http.Request) {
 	var u models.User
 	json.NewDecoder(r.Body).Decode(&u)
-	u.Store()
+	err := u.Store()
+	if err != nil {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+	services.WriteDataIntoResponse(u.AsMap(true, false), w)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {

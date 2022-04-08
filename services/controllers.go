@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type customClaims struct {
@@ -15,11 +16,11 @@ type customClaims struct {
 	jwt.StandardClaims
 }
 
-func CreateCookieToken(uid string, w http.ResponseWriter) {
+func CreateCookieToken(uid primitive.ObjectID, w http.ResponseWriter) {
 	expireDays := 3
 	d, _ := time.ParseDuration(fmt.Sprintf("%dh", expireDays*24))
 	claims := customClaims{
-		Uid: uid,
+		Uid: uid.Hex(),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(d).Unix(),
 		},
@@ -50,4 +51,14 @@ func BodyIntoMap(r *http.Request) (map[string]string, error) {
 		return nil, e
 	}
 	return m, nil
+}
+
+func WriteDataIntoResponse(d interface{}, w http.ResponseWriter) {
+	j, e := json.Marshal(d)
+	if e != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
 }

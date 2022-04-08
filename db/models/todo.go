@@ -1,10 +1,12 @@
 package models
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type Todo struct {
-	ID      string `json:"_id" bson:"_id"`
-	Title   string `json:"title" bson:"totle"`
-	Content string `json:"content" bson:"content"`
-	User    string `json:"user" bson:"user"`
+	ID      primitive.ObjectID `json:"_id" bson:"_id"`
+	Title   string             `json:"title" bson:"totle"`
+	Content string             `json:"content" bson:"content"`
+	User    primitive.ObjectID `json:"user" bson:"user"`
 }
 
 func (t *Todo) FindById(id int64) {
