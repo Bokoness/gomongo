@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type TestModel struct {
@@ -17,6 +16,7 @@ type TestModel struct {
 var testModel TestModel
 
 const myid = "624ff033ec3ff69bf51cbbf8"
+const dbname = "testing"
 
 func (t TestModel) toMap(showId bool) map[string]string {
 	mapData := map[string]string{
@@ -34,7 +34,7 @@ func TestInsertOne(t *testing.T) {
 	testModel.ID = myid
 	testModel.FirstName = "Ness"
 	testModel.LastName = "Bokobza"
-	result, err := db.InsertOne("testing", testModel.toMap(true))
+	result, err := db.InsertOne(dbname, testModel.toMap(true))
 	if err != nil {
 		t.Error(err)
 	}
@@ -47,13 +47,36 @@ func TestInsertOne(t *testing.T) {
 	}
 }
 
-func TestFindByIdAndDelete(t *testing.T) {
+func TestFindByIdAndUpdate(t *testing.T) {
 	loadEnv()
-	id, err := primitive.ObjectIDFromHex(myid)
+	testModel.ID = myid
+	testModel.FirstName = "name updated"
+	testModel.LastName = "lastname updated"
+	result, err := db.FindByIdAndUpdate(dbname, myid, testModel.toMap(true))
 	if err != nil {
 		t.Error(err)
 	}
-	err = db.FindByIdAndDelete("testing", id)
+	if result.MatchedCount <= 0 {
+		t.Error("couldn't find record to udpate")
+	} else if result.ModifiedCount <= 0 {
+		t.Error("document is found but did not updated")
+	}
+}
+
+func TestFindByIdAndDelete(t *testing.T) {
+	loadEnv()
+	result, err := db.FindByIdAndDelete(dbname, myid)
+	if err != nil {
+		t.Error(err)
+	}
+	if result.DeletedCount <= 0 {
+		t.Error("item is not deleted")
+	}
+}
+
+func TestDropDb(t *testing.T) {
+	loadEnv()
+	err := db.DropDatabase(dbname)
 	if err != nil {
 		t.Error(err)
 	}

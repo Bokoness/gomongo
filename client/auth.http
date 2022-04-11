@@ -1,0 +1,22 @@
+@model = auth
+
+# @name register
+POST {{url}}/{{model}}/register HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "username":"admin",
+  "password": "321123"
+}
+###
+
+# @name login
+POST {{url}}/{{model}}/login HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+	"username":"admin",
+  "password": "321123"
+}
+###
+

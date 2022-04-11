@@ -1,0 +1,40 @@
+@model = model
+@id = {{store.response.body.id}}
+
+# @name store
+POST {{url}}/{{model}} HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "name":"My Campaign"
+}
+
+###
+# @name show
+## Show one record
+GET {{url}}/{{model}}/{{id}} HTTP/1.1
+
+###
+# @name index
+## Fetch all records
+GET {{url}}/{{model}} HTTP/1.1
+
+###
+# @name update
+# update one campaign
+PUT {{url}}/{{model}}/{{id}} HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "name":"updated"
+}
+
+###
+# @name delete
+# delete one campaign
+DELETE {{url}}/{{model}}/{{id}} HTTP/1.1
+###
+
+
+
+

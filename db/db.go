@@ -75,7 +75,7 @@ func FindOneById(col string, id string) (*mongo.SingleResult, error) {
 	return result, nil
 }
 
-func FindByIdAndUpdate(col string, id primitive.ObjectID, updates interface{}) (*mongo.UpdateResult, error) {
+func FindByIdAndUpdate(col string, id string, updates interface{}) (*mongo.UpdateResult, error) {
 	client, db, ctx, err := connect()
 	if err != nil {
 		return nil, err
@@ -103,19 +103,19 @@ func UpdateOne(col string, filter map[string]string, updates interface{}) (*mong
 	return result, nil
 }
 
-func FindByIdAndDelete(col string, id primitive.ObjectID) error {
+func FindByIdAndDelete(col string, id string) (*mongo.DeleteResult, error) {
 	client, db, ctx, err := connect()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer client.Disconnect(ctx)
 	collection := db.Collection(col)
 	filter := bson.D{{Key: "_id", Value: id}}
-	_, err = collection.DeleteOne(context.TODO(), filter)
+	result, err := collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return result, nil
 }
 
 // InsertedIdToObjectId convert Result.InsertedId into primitive.ObjectId
@@ -133,4 +133,17 @@ func InsertedIdToString(id interface{}) (string, error) {
 	} else {
 		return "", errors.New("cannot convert into objectId")
 	}
+}
+
+func DropDatabase(dbname string) error {
+	client, _, ctx, err := connect()
+	if err != nil {
+		return err
+	}
+	defer client.Disconnect(ctx)
+	err = client.Database(dbname).Drop(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }

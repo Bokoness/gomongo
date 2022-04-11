@@ -42,7 +42,7 @@ func (u *User) FindByIdAndUpdate(id primitive.ObjectID) {
 	update := map[string]string{
 		"username": "bokoness is the update!!!!!",
 	}
-	db.FindByIdAndUpdate(collection, id, update)
+	db.FindByIdAndUpdate(collection, id.Hex(), update)
 }
 
 func (u *User) FindById(id string) error {
@@ -88,7 +88,7 @@ func (u *User) Save() error {
 	if u.ID.IsZero() {
 		return errors.New("user id is required")
 	}
-	_, err := db.FindByIdAndUpdate(collection, u.ID, u)
+	_, err := db.FindByIdAndUpdate(collection, u.ID.Hex(), u)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (u *User) Save() error {
 }
 
 func (u *User) Destroy() error {
-	err := db.FindByIdAndDelete(collection, u.ID)
+	_, err := db.FindByIdAndDelete(collection, u.ID.Hex())
 	if err != nil {
 		return err
 	}
