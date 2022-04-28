@@ -15,4 +15,5 @@ func TodoRoutes(r *mux.Router) {
 	s.HandleFunc("/{id}", todo.Update).Methods("PUT")
 	s.HandleFunc("/{id}", todo.Destroy).Methods("DELETE")
 	s.Use(middleware.UserAuth)
+	s.Use(middleware.ServerHeaders)
 }

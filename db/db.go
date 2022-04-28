@@ -38,7 +38,7 @@ func InsertOne(col string, data interface{}) (*mongo.InsertOneResult, error) {
 	return res, nil
 }
 
-func FindOne(col string, filter map[string]string) (*mongo.SingleResult, error) {
+func FindOne(col string, filter interface{}) (*mongo.SingleResult, error) {
 	client, db, ctx, err := connect()
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func FindByIdAndUpdate(col string, id string, updates interface{}) (*mongo.Updat
 	return result, nil
 }
 
-func UpdateOne(col string, filter map[string]string, updates interface{}) (*mongo.UpdateResult, error) {
+func UpdateOne(col string, filter interface{}, updates interface{}) (*mongo.UpdateResult, error) {
 	client, db, ctx, err := connect()
 	if err != nil {
 		return nil, err

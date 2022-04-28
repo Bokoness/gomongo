@@ -12,5 +12,5 @@ func UserRoutes(r *mux.Router) {
 	s.HandleFunc("/{id}", user.Show).Methods("GET")
 	s.HandleFunc("/{id}", user.Update).Methods("PUT")
 	s.HandleFunc("/{id}", user.Destroy).Methods("DELETE")
-	s.Use(middleware.UserAuth)
+	s.Use(middleware.UserAuth, middleware.ServerHeaders)
 }

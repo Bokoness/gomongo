@@ -17,7 +17,6 @@ func Show(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(500)
 	}
-	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonData)
 }
 
